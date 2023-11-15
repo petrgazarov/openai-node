@@ -89,7 +89,18 @@ export namespace ChatCompletion {
      * model called a tool, or `function_call` (deprecated) if the model called a
      * function.
      */
-    finish_reason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'function_call';
+    finish_reason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'function_call' | undefined;
+
+    /*
+     * Hack to work around the fact that the API returns `finish_details` for
+     * `gpt-4-vision-preview` but `finish_reason` for other models.
+     * See https://github.com/openai/openai-node/issues/499
+     */
+    finish_details?: {
+      type: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'function_call';
+
+      stop: string;
+    };
 
     /**
      * The index of the choice in the list of choices.

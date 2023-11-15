@@ -242,7 +242,16 @@ function finalizeChatCompletion(snapshot: ChatCompletionSnapshot): ChatCompletio
   const { id, choices, created, model } = snapshot;
   return {
     id,
-    choices: choices.map(({ message, finish_reason, index }): ChatCompletion.Choice => {
+    choices: choices.map(({ message, finish_reason, finish_details, index }): ChatCompletion.Choice => {
+      /*
+       * Hack to work around the fact that the API returns `finish_details` for
+       * `gpt-4-vision-preview` but `finish_reason` for other models.
+       * See https://github.com/openai/openai-node/issues/499
+       */
+      if (typeof finish_reason === 'undefined') {
+        finish_reason = finish_details?.type;
+      }
+
       if (!finish_reason) throw new OpenAIError(`missing finish_reason for choice ${index}`);
       const { content = null, function_call, tool_calls } = message;
       const role = message.role as 'assistant'; // this is what we expect; in theory it could be different which would make our types a slight lie but would be fine.
@@ -335,6 +344,8 @@ export namespace ChatCompletionSnapshot {
      * if the model called a function.
      */
     finish_reason: ChatCompletion.Choice['finish_reason'] | null;
+
+    finish_details?: ChatCompletion.Choice['finish_details'];
 
     /**
      * The index of the choice in the list of choices.
